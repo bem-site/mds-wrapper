@@ -1,6 +1,7 @@
 mds-wrapper
 ===============
 
+[![Coverage Status](https://coveralls.io/repos/bem-site/mds-wrapper/badge.svg)](https://coveralls.io/r/bem-site/mds-wrapper)
 [![Build Status](https://travis-ci.org/bem-site/mds-wrapper.svg?branch=master)](https://travis-ci.org/bem-site/mds-wrapper)
 [![Dependency Status](https://david-dm.org/bem-site/mds-wrapper.svg?style=flat)](https://david-dm.org/bem-site/mds-wrapper)
 [![devDependency Status](https://david-dm.org/bem-site/mds-wrapper/dev-status.svg?style=flat)](https://david-dm.org/bem-site/mds-wrapper#info=devDependencies)
