@@ -17,19 +17,6 @@ var util = require('util'),
         post: { port: 1111 },
         auth: 'My authorization key'
     };
-    /*
-    configuration = {
-        host: 'storage-int.mdst.yandex.net',
-        namespace: 'lego-site',
-        get: {
-            port: 80
-        },
-        post: {
-            port: 1111
-        },
-        auth: 'Basic bGVnby1zaXRlOjJkZGUyZjI0OGIxODI2NWRiZWM2ZGRiOGVhMjBkNjg0'
-    };
-    */
 
 /**
  * Executes request sending with given options and callback function
@@ -41,12 +28,12 @@ var util = require('util'),
 function _sendRequest(opts, callback) {
     if (callback) {
         request(opts, function (error, response, body) {
-            error ? callback(error) : callback(null, body);
+            error ? callback(error) : callback(null, response.statusCode === 404 ? null : body);
         });
     } else {
         var def = vow.defer();
         request(opts, function (error, response, body) {
-            error ? def.reject : def.resolve(body);
+            error ? def.reject(error) : def.resolve(response.statusCode === 404 ? null : body);
         });
         return def.promise();
     }
