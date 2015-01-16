@@ -1,22 +1,28 @@
 var should = require('should'),
 
     mds = require('../index.js'),
+    emulator = require('../mds-emulator'),
     key1 = 'test/unique/key1',
     key2 = 'test/unique/key2',
     value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed ' +
         'do eiusmod tempor incididunt ut labore et dolore magna aliqua',
 
     options = {
-        host: 'localhost',
+        host: '127.0.0.1',
         namespace: 'my-site',
-        get: { port: 80 },
-        post: { port: 1111 },
+        get: { port: 3000 },
+        post: { port: 3001 },
         auth: ''
     };
 
 describe('mds-wrapper', function () {
     before(function () {
         mds.init(options);
+        emulator.start(options.get.port, options.post.port);
+    });
+
+    after(function() {
+        emulator.stop();
     });
 
     describe('#before write', function () {
