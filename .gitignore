@@ -1,3 +1,7 @@
+.idea
+*.csv
+*.dat
+
 # Logs
 logs
 *.log
