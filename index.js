@@ -54,7 +54,7 @@ function _sendRequest(opts, callback) {
 
 /**
  * Initialize mds storage by given configuration
- * @param conf
+ * @param {Object} conf - configuration object
  */
 function init(conf) {
     configuration = conf;
