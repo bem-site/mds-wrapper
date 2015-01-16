@@ -22,7 +22,9 @@
     "vow": "~0.4.1"
   },
   "devDependencies": {
+    "coveralls": "^2.11.2",
     "mocha": "~2.1.0",
+    "mocha-lcov-reporter": "0.0.1",
     "should": "~4.4.2",
     "istanbul": "^0.3.5",
     "jshint": "~2.5.11",
@@ -32,7 +34,8 @@
   "scripts": {
     "mocha": "node_modules/.bin/mocha",
     "istanbul": "istanbul cover ./node_modules/mocha/bin/_mocha",
-    "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js . && npm run mocha"
+    "codestyle": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js",
+    "test": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
   },
   "readmeFilename": "README.md",
   "licenses": [
@@ -42,4 +45,3 @@
     }
   ]
 }
-
