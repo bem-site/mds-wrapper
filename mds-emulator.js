@@ -71,7 +71,7 @@ WriteServer.prototype.init = function (port) {
                 body += data;
             });
             req.on('end', function () {
-                memStorage[ key ] = body;
+                memStorage[key] = body;
                 _createResponse(200, memStorage[key]);
                 res.writeHead(200, { 'Content-Type': 'text/html' });
             });
