@@ -32,8 +32,7 @@
   "scripts": {
     "mocha": "node_modules/.bin/mocha",
     "istanbul": "istanbul cover ./node_modules/mocha/bin/_mocha",
-    "codestyle": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js",
-    "test": "npm run codestyle && npm run mocha"
+    "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js && npm run mocha"
   },
   "readmeFilename": "README.md",
   "licenses": [
