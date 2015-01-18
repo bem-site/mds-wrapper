@@ -120,3 +120,6 @@ npm run mocha
 ```
 npm run istanbul
 ```
+
+### Лицензия
+© 2012 YANDEX LLC. Код лицензирован [Mozilla Public License 2.0](LICENSE.txt).

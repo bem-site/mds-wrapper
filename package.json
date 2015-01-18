@@ -38,10 +38,5 @@
     "test": "npm run codestyle && npm run cover"
   },
   "readmeFilename": "README.md",
-  "licenses": [
-    {
-      "type": "APACHE",
-      "url": "http://github.com/bem-site/mds-wrapper/raw/master/LICENSE"
-    }
-  ]
+  "license": "MPL-2.0"
 }
