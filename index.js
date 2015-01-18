@@ -17,6 +17,12 @@ MDS.prototype = {
     _write: undefined,
     _remove: undefined,
 
+    _log: function (message) {
+        if (this._options.debug) {
+            console.log(message);
+        }
+    },
+
     /**
      * Executes request sending with given options and callback function
      * @param {Object} opts - request options object
@@ -25,6 +31,7 @@ MDS.prototype = {
      * @private
      */
     _sendRequestWithCallback: function (opts, callback) {
+        this._log(util.format('_sendRequestWithCallback: %s', opts.url));
         request(opts, function (error, response, body) {
             error ? callback(error) : callback(null, response.statusCode === 404 ? null : body);
         });
@@ -38,6 +45,7 @@ MDS.prototype = {
      */
     _sendRequestWithPromise: function (opts) {
         var def = vow.defer();
+        this._log(util.format('_sendRequestWithPromise: %s', opts.url));
         request(opts, function (error, response, body) {
             error ? def.reject(error) : def.resolve(response.statusCode === 404 ? null : body);
         });

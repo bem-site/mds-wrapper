@@ -12,7 +12,8 @@ var should = require('should'),
         namespace: 'my-site',
         get: { port: 3000 },
         post: { port: 3001 },
-        auth: ''
+        auth: '',
+        debug: true
     },
     mds;
 
