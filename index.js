@@ -17,6 +17,11 @@ MDS.prototype = {
     _write: undefined,
     _remove: undefined,
 
+    /**
+     * Creates log message in console
+     * @param {String} message - log message
+     * @private
+     */
     _log: function (message) {
         if (this._options.debug) {
             console.log(message);
@@ -96,6 +101,8 @@ MDS.prototype = {
      */
     init: function (options) {
         this._options = options;
+        this._base.timeout = options.timeout || 5000;
+
         this._initReadOptions();
         this._initWriteOptions();
         this._initRemoveOptions();
