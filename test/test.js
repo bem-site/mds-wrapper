@@ -1,6 +1,6 @@
 var should = require('should'),
 
-    mds = require('../index.js'),
+    MDS = require('../index.js'),
     emulator = require('../mds-emulator'),
     key1 = 'test/unique/key1',
     key2 = 'test/unique/key2',
@@ -13,28 +13,29 @@ var should = require('should'),
         get: { port: 3000 },
         post: { port: 3001 },
         auth: ''
-    };
+    },
+    mds;
 
 describe('mds-wrapper', function () {
     before(function () {
-        mds.init(options);
+        mds = new MDS(options);
         emulator.start(options.get.port, options.post.port);
     });
 
-    after(function() {
+    after(function () {
         emulator.stop();
     });
 
     describe('#before write', function () {
         it('it shouldn\'t be any data', function (done) {
-            mds.read(key1, function(error, body) {
+            mds.read(key1, function (error, body) {
                 should.not.exist(error);
                 should(body).not.be.ok;
                 done();
             });
         });
         it('it shouldn\'t be any data', function (done) {
-            mds.read(key2, null).then(function(body) {
+            mds.readP(key2).then(function (body) {
                 should(body).not.be.ok;
                 done();
             });
@@ -43,13 +44,13 @@ describe('mds-wrapper', function () {
 
     describe('#write', function () {
         it('it should write correctly (callback)', function (done) {
-            mds.write(key1, value, function(error, body) {
+            mds.write(key1, value, function (error, body) {
                 done();
             });
         });
 
         it('it should write correctly (promise)', function (done) {
-            mds.write(key2, value, null).then(function(body) {
+            mds.writeP(key2, value).then(function (body) {
                 done();
             });
         });
@@ -57,7 +58,7 @@ describe('mds-wrapper', function () {
 
     describe('#after write', function () {
         it('it should be present in storage (callback)', function (done) {
-            mds.read(key1, function(error, body) {
+            mds.read(key1, function (error, body) {
                 should.not.exist(error);
                 should.exist(body);
                 body.should.equal(value);
@@ -66,7 +67,7 @@ describe('mds-wrapper', function () {
         });
 
         it('it should be present in storage (promise)', function (done) {
-            mds.read(key2, null).then(function(body) {
+            mds.readP(key2).then(function (body) {
                 should.exist(body);
                 body.should.equal(value);
                 done();
@@ -76,13 +77,13 @@ describe('mds-wrapper', function () {
 
     describe('#remove', function () {
         it('it should remove correctly (callback)', function (done) {
-            mds.remove(key1, function(error, body) {
+            mds.remove(key1, function (error, body) {
                 done();
             });
         });
 
         it('it should remove correctly (promise)', function (done) {
-            mds.remove(key2, null).then(function(body) {
+            mds.removeP(key2).then(function (body) {
                 done();
             });
         });
@@ -90,14 +91,14 @@ describe('mds-wrapper', function () {
 
     describe('#after remove', function () {
         it('it shouldn\'t be any data', function (done) {
-            mds.read(key1, function(error, body) {
+            mds.read(key1, function (error, body) {
                 should.not.exist(error);
                 should(body).not.be.ok;
                 done();
             });
         });
         it('it shouldn\'t be any data', function (done) {
-            mds.read(key2, null).then(function(body) {
+            mds.read(key2, null).then(function (body) {
                 should(body).not.be.ok;
                 done();
             });

@@ -11,14 +11,15 @@ mds-wrapper
 ### Использование
 
 ```
-var mds = require('mds-wrapper');
-mds.init({
-    host: '127.0.0.1',
-    namespace: 'my-site',
-    get: { port: 3000 },
-    post: { port: 3001 },
-    auth: ''
-})
+var MDS = require('mds-wrapper'),
+    mds = new MDS({
+        host: '127.0.0.1',
+        namespace: 'my-site',
+        get: { port: 3000 },
+        post: { port: 3001 },
+        auth: ''
+    });
+
 mds.read('key1', function(err, data) {
     console.log(data); //your value will be here
 });
@@ -26,11 +27,13 @@ mds.read('key1', function(err, data) {
 
 ### API
 
-#### init
-Метод для инициализации хранилища. В качестве аргумента принимает объект с конфигурацией хранилища.
+#### constructor
+
+Для инициализации хранилища необходимо создать новый объект класса MDS.
+В качестве аргумента конструктор MDS принимает объект с конфигурацией хранилища.
 
 ```
-mds.init(options);
+mds = new MDS(options);
 ```
 
 Где объект options может иметь следующий набор доступных полей:
@@ -51,30 +54,12 @@ mds.read('you-custom-key', function(error, value) {
 });
 ```
 
-Примечание: здесь функция обратного вызова не является обязательной. В случае, если callback - функция,
-не будет передана в метод, или она будет равна null, то метод `read` вернет promise объект:
-
-```
-mds.read('you-custom-key').then(function(value) {
-    console.log(value);
-});
-```
-
 #### write
 
 Метод для записи данных в хранилище по ключу.
 
 ```
 mds.write('you-custom-key', 'your-custom-value', function(error, value) {
-    console.log(value); // 'your-custom-value'
-});
-```
-
-Примечание: здесь функция обратного вызова не является обязательной. В случае, если callback - функция,
-не будет передана в метод, или она будет равна null, то метод `write` вернет promise объект:
-
-```
-mds.write('you-custom-key', 'your-custom-value').then(function(value) {
     console.log(value); // 'your-custom-value'
 });
 ```
@@ -89,11 +74,32 @@ mds.remove('you-custom-key', function(error, result) {
 });
 ```
 
-Примечание: здесь функция обратного вызова не является обязательной. В случае, если callback - функция,
-не будет передана в метод, или она будет равна null, то метод `remove` вернет promise объект:
+#### readP
+
+Promise вариант вызова метода `read`:
 
 ```
-mds.write('you-custom-key').then(function(result) {
+mds.read('you-custom-key').then(function(value) {
+    console.log(value);
+});
+```
+
+#### writeP
+
+Promise вариант вызова метода `write`:
+
+```
+mds.write('you-custom-key', 'your-custom-value').then(function(value) {
+    console.log(value); // 'your-custom-value'
+});
+```
+
+#### removeP
+
+Promise вариант вызова метода `remove`:
+
+```
+mds.remove('you-custom-key').then(function(result) {
     console.log(result); // null
 });
 ```
