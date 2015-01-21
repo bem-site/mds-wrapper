@@ -58,12 +58,25 @@ MDS.prototype = {
     },
 
     /**
+     * Creates new object and copy all properties from base object into it
+     * @param {Object} base object
+     * @returns {Object} new instance of base object
+     * @private
+     */
+    _createOptionsFromBase: function (base) {
+        return Object.keys(base).reduce(function (prev, key) {
+            prev[key] = base[key];
+            return prev;
+        }, {});
+    },
+
+    /**
      * Initialize options for read methods
      * @private
      */
     _initReadOptions: function () {
         this._read = {};
-        this._read.options = Object.create(this._base);
+        this._read.options = this._createOptionsFromBase(this._base);
         this._read.options.method = 'GET';
         this._read.url = util.format('http://%s:%s/get-%s/',
             this._options.host, this._options.get.port, this._options.namespace);
@@ -75,7 +88,7 @@ MDS.prototype = {
      */
     _initWriteOptions: function () {
         this._write = {};
-        this._write.options = Object.create(this._base);
+        this._write.options = this._createOptionsFromBase(this._base);
         this._write.options.method = 'POST';
         this._write.options.headers = { Authorization: this._options.auth };
         this._write.url = util.format('http://%s:%s/upload-%s/',
@@ -88,7 +101,7 @@ MDS.prototype = {
      */
     _initRemoveOptions: function () {
         this._remove = {};
-        this._remove.options = Object.create(this._base);
+        this._remove.options = this._createOptionsFromBase(this._base);
         this._remove.options.method = 'GET';
         this._remove.options.headers = { Authorization: this._options.auth };
         this._remove.url = util.format('http://%s:%s/delete-%s/',
@@ -117,7 +130,7 @@ MDS.prototype = {
      * @private
      */
     read: function (key, callback) {
-        var o = Object.create(this._read.options);
+        var o = this._createOptionsFromBase(this._read.options);
         o.url = this._read.url + key;
         return callback !== null ?
             this._sendRequestWithCallback(o, callback) :
@@ -134,7 +147,7 @@ MDS.prototype = {
      * @private
      */
     write: function (key, value, callback) {
-        var o = Object.create(this._write.options);
+        var o = this._createOptionsFromBase(this._write.options);
         o.url = this._write.url + key;
         o.body = value;
         return callback !== null ?
@@ -150,7 +163,7 @@ MDS.prototype = {
      * @private
      */
     remove: function (key, callback) {
-        var o = Object.create(this._remove.options);
+        var o = this._createOptionsFromBase(this._remove.options);
         o.url = this._remove.url + key;
         return callback !== null ?
             this._sendRequestWithCallback(o, callback) :
