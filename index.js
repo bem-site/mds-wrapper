@@ -79,7 +79,7 @@ MDS.prototype = {
         this._read.options = this._createOptionsFromBase(this._base);
         this._read.options.method = 'GET';
         this._read.url = util.format('http://%s:%s/get-%s/',
-            this._options.host, this._options.get.port, this._options.namespace);
+            this._options.get.host, this._options.get.port, this._options.namespace);
     },
 
     /**
@@ -92,7 +92,7 @@ MDS.prototype = {
         this._write.options.method = 'POST';
         this._write.options.headers = { Authorization: this._options.auth };
         this._write.url = util.format('http://%s:%s/upload-%s/',
-            this._options.host, this._options.post.port, this._options.namespace);
+            this._options.post.host, this._options.post.port, this._options.namespace);
     },
 
     /**
@@ -105,7 +105,7 @@ MDS.prototype = {
         this._remove.options.method = 'GET';
         this._remove.options.headers = { Authorization: this._options.auth };
         this._remove.url = util.format('http://%s:%s/delete-%s/',
-            this._options.host, this._options.post.port, this._options.namespace);
+            this._options.post.host, this._options.post.port, this._options.namespace);
     },
 
     /**

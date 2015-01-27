@@ -8,10 +8,15 @@ var should = require('should'),
         'do eiusmod tempor incididunt ut labore et dolore magna aliqua',
 
     options = {
-        host: '127.0.0.1',
         namespace: 'my-site',
-        get: { port: 3000 },
-        post: { port: 3001 },
+        get: {
+            host: '127.0.0.1',
+            port: 3000
+        },
+        post: {
+            host: '127.0.0.1',
+            port: 3001
+        },
         auth: '',
         debug: true
     },
