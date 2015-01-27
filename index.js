@@ -116,6 +116,9 @@ MDS.prototype = {
         this._options = options;
         this._base.timeout = options.timeout || 5000;
 
+        this._options.get.host = this._options.get.host || this._options.host;
+        this._options.post.host = this._options.post.host || this._options.host;
+
         this._initReadOptions();
         this._initWriteOptions();
         this._initRemoveOptions();
