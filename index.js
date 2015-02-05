@@ -17,6 +17,13 @@ MDS.prototype = {
     _write: undefined,
     _remove: undefined,
 
+    _errors: {
+        MISSING_AUTH: 'Auth headers missed or invalid',
+        NO_EMPTY_SPACE: 'No empty space in MDS storage',
+        INVALID_REQUEST: 'Invalid request',
+        MDS: 'MDS internal error'
+    },
+
     /**
      * Creates log message in console
      * @param {String} message - log message
@@ -28,6 +35,10 @@ MDS.prototype = {
         }
     },
 
+    _logRS: function (status, url) {
+        this._log(util.format('response status %s for url: %s', status, url));
+    },
+
     /**
      * Executes request sending with given options and callback function
      * @param {Object} opts - request options object
@@ -36,9 +47,36 @@ MDS.prototype = {
      * @private
      */
     _sendRequestWithCallback: function (opts, callback) {
+        var _this = this;
         this._log(util.format('_sendRequestWithCallback: %s', opts.url));
         request(opts, function (error, response, body) {
-            error ? callback(error) : callback(null, response.statusCode === 404 ? null : body);
+            if (error) {
+                callback(error);
+            }
+            if (response.statusCode === 200) {
+                _this._logRS(response.statusCode, opts.url);
+                callback(null, body);
+            }
+            if (response.statusCode === 404) {
+                _this._logRS(response.statusCode, opts.url);
+                callback(null, null);
+            }
+            if (response.statusCode === 400) {
+                _this._logRS(response.statusCode, opts.url);
+                callback(new Error(_this.errors.INVALID_REQUEST));
+            }
+            if (response.statusCode === 401) {
+                _this._logRS(response.statusCode, opts.url);
+                callback(new Error(_this.errors.MISSING_AUTH));
+            }
+            if (response.statusCode === 507) {
+                _this._logRS(response.statusCode, opts.url);
+                callback(new Error(_this.errors.NO_EMPTY_SPACE));
+            }
+            if (response.statusCode >= 500) {
+                _this._logRS(response.statusCode, opts.url);
+                callback(new Error(_this.errors.MDS));
+            }
         });
     },
 
@@ -49,10 +87,37 @@ MDS.prototype = {
      * @private
      */
     _sendRequestWithPromise: function (opts) {
-        var def = vow.defer();
+        var _this = this,
+            def = vow.defer();
         this._log(util.format('_sendRequestWithPromise: %s', opts.url));
         request(opts, function (error, response, body) {
-            error ? def.reject(error) : def.resolve(response.statusCode === 404 ? null : body);
+            if (error) {
+                def.reject(error);
+            }
+            if (response.statusCode === 200) {
+                _this._logRS(response.statusCode, opts.url);
+                def.resolve(body);
+            }
+            if (response.statusCode === 404) {
+                _this._logRS(response.statusCode, opts.url);
+                def.resolve(null);
+            }
+            if (response.statusCode === 400) {
+                _this._logRS(response.statusCode, opts.url);
+                def.reject(new Error(_this.errors.INVALID_REQUEST));
+            }
+            if (response.statusCode === 401) {
+                _this._logRS(response.statusCode, opts.url);
+                def.reject(new Error(_this.errors.MISSING_AUTH));
+            }
+            if (response.statusCode === 507) {
+                _this._logRS(response.statusCode, opts.url);
+                def.reject(new Error(_this.errors.NO_EMPTY_SPACE));
+            }
+            if (response.statusCode >= 500) {
+                _this._logRS(response.statusCode, opts.url);
+                def.reject(new Error(_this.errors.MDS));
+            }
         });
         return def.promise();
     },
