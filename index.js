@@ -113,11 +113,26 @@ MDS.prototype = {
      * @param {Object} options - configuration object
      */
     init: function (options) {
+        if (!options) {
+            throw new Error('Can\'t initialize mds wrapper. Options undefined.');
+        }
+
         this._options = options;
         this._base.timeout = options.timeout || 5000;
 
-        this._options.get.host = this._options.get.host || this._options.host;
-        this._options.post.host = this._options.post.host || this._options.host;
+        if (!this._options.get) {
+            throw new Error('Can\'t initialize mds wrapper. Options for read data requests undefined.');
+        }
+
+        if (!this._options.post) {
+            throw new Error('Can\'t initialize mds wrapper. Options for write data requests undefined.');
+        }
+
+        this._options.get.host = this._options.get.host || this._options.host || '127.0.0.1';
+        this._options.get.port = this._options.get.port || 80;
+
+        this._options.post.host = this._options.post.host || this._options.host || '127.0.0.1';
+        this._options.post.port = this._options.post.port || 1111;
 
         this._initReadOptions();
         this._initWriteOptions();
