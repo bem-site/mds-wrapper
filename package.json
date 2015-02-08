@@ -17,16 +17,16 @@
     "node": ">= 0.8.0"
   },
   "dependencies": {
-    "request": "2.51.x",
-    "vow": "~0.4.1"
+    "request": "^2.53.x",
+    "vow": "^0.4.x"
   },
   "devDependencies": {
-    "mocha": "~2.1.0",
-    "mocha-lcov-reporter": "0.0.1",
+    "mocha": "~2.1.x",
+    "mocha-lcov-reporter": "0.0.x",
     "should": "~4.6.x",
     "istanbul": "^0.3.x",
     "jshint": "~2.6.x",
-    "jscs": "~1.10.x"
+    "jscs": "^1.11.x"
   },
   "main": "index.js",
   "scripts": {
