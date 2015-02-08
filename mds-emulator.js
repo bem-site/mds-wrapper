@@ -43,6 +43,12 @@ ReadServer.prototype.init = function (port) {
                 res.end(value);
             };
 
+        // test invalid request
+        if (key === 'null') {
+            _createResponse(400, null);
+            return;
+        }
+
         if (namespace.match(/^get\-/)) {
             var value = memStorage[key];
             value ? _createResponse(200, value) : _createResponse(404, null);
@@ -66,6 +72,24 @@ WriteServer.prototype.init = function (port) {
                 res.end(value);
             };
 
+        // test missed header
+        if (req.headers['authorization'] === 'undefined') {
+            _createResponse(401, null);
+            return;
+        }
+
+        // test fullfilled storage
+        if (key === '-1') {
+            _createResponse(507, null);
+            return;
+        }
+
+        // test internal storage error
+        if (key === '-2') {
+            _createResponse(500, null);
+            return;
+        }
+
         if (namespace.match(/^upload\-/)) {
             req.on('data', function (data) {
                 body += data;
@@ -73,7 +97,6 @@ WriteServer.prototype.init = function (port) {
             req.on('end', function () {
                 memStorage[key] = body;
                 _createResponse(200, memStorage[key]);
-                res.writeHead(200, { 'Content-Type': 'text/html' });
             });
         } else if (namespace.match(/^delete\-/)) {
             delete memStorage[key];

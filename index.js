@@ -51,31 +51,28 @@ MDS.prototype = {
         this._log(util.format('_sendRequestWithCallback: %s', opts.url));
         request(opts, function (error, response, body) {
             if (error) {
-                callback(error);
+                return callback(error);
             }
+
+            _this._logRS(response.statusCode, opts.url);
+
             if (response.statusCode === 200) {
-                _this._logRS(response.statusCode, opts.url);
-                callback(null, body);
+                return callback(null, body);
             }
             if (response.statusCode === 404) {
-                _this._logRS(response.statusCode, opts.url);
-                callback(null, null);
+                return callback(null, null);
             }
             if (response.statusCode === 400) {
-                _this._logRS(response.statusCode, opts.url);
-                callback(new Error(_this.errors.INVALID_REQUEST));
+                return callback(new Error(_this._errors.INVALID_REQUEST));
             }
             if (response.statusCode === 401) {
-                _this._logRS(response.statusCode, opts.url);
-                callback(new Error(_this.errors.MISSING_AUTH));
+                return callback(new Error(_this._errors.MISSING_AUTH));
             }
             if (response.statusCode === 507) {
-                _this._logRS(response.statusCode, opts.url);
-                callback(new Error(_this.errors.NO_EMPTY_SPACE));
+                return callback(new Error(_this._errors.NO_EMPTY_SPACE));
             }
             if (response.statusCode >= 500) {
-                _this._logRS(response.statusCode, opts.url);
-                callback(new Error(_this.errors.MDS));
+                return callback(new Error(_this._errors.MDS));
             }
         });
     },
@@ -93,30 +90,27 @@ MDS.prototype = {
         request(opts, function (error, response, body) {
             if (error) {
                 def.reject(error);
-            }
-            if (response.statusCode === 200) {
+            } else {
                 _this._logRS(response.statusCode, opts.url);
-                def.resolve(body);
-            }
-            if (response.statusCode === 404) {
-                _this._logRS(response.statusCode, opts.url);
-                def.resolve(null);
-            }
-            if (response.statusCode === 400) {
-                _this._logRS(response.statusCode, opts.url);
-                def.reject(new Error(_this.errors.INVALID_REQUEST));
-            }
-            if (response.statusCode === 401) {
-                _this._logRS(response.statusCode, opts.url);
-                def.reject(new Error(_this.errors.MISSING_AUTH));
-            }
-            if (response.statusCode === 507) {
-                _this._logRS(response.statusCode, opts.url);
-                def.reject(new Error(_this.errors.NO_EMPTY_SPACE));
-            }
-            if (response.statusCode >= 500) {
-                _this._logRS(response.statusCode, opts.url);
-                def.reject(new Error(_this.errors.MDS));
+
+                if (response.statusCode === 200) {
+                    def.resolve(body);
+                }
+                if (response.statusCode === 404) {
+                    def.resolve(null);
+                }
+                if (response.statusCode === 400) {
+                    def.reject(new Error(_this._errors.INVALID_REQUEST));
+                }
+                if (response.statusCode === 401) {
+                    def.reject(new Error(_this._errors.MISSING_AUTH));
+                }
+                if (response.statusCode === 507) {
+                    def.reject(new Error(_this._errors.NO_EMPTY_SPACE));
+                }
+                if (response.statusCode >= 500) {
+                    def.reject(new Error(_this._errors.MDS));
+                }
             }
         });
         return def.promise();
