@@ -211,7 +211,9 @@ MDS.prototype = {
         var o = this._createOptionsFromBase(this._read.options);
         o.url = this._read.url + key;
         o.headers = o.headers || {};
-        o.headers['Content-type'] = mime.lookup(key);
+        if (key) {
+            o.headers[ 'Content-type' ] = mime.lookup(key);
+        }
         return callback !== null ?
             this._sendRequestWithCallback(o, callback) :
             this._sendRequestWithPromise(o);
@@ -230,7 +232,9 @@ MDS.prototype = {
         var o = this._createOptionsFromBase(this._write.options);
         o.url = this._write.url + key;
         o.body = value;
-        o.headers['Content-type'] = mime.lookup(key);
+        if (key) {
+            o.headers[ 'Content-type' ] = mime.lookup(key);
+        }
         return callback !== null ?
             this._sendRequestWithCallback(o, callback) :
             this._sendRequestWithPromise(o);
