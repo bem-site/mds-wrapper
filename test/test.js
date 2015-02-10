@@ -2,8 +2,8 @@ var should = require('should'),
 
     MDS = require('../index.js'),
     emulator = require('../mds-emulator'),
-    key1 = 'test/unique/key1',
-    key2 = 'test/unique/key2',
+    key1 = 'test/unique/key1.html',
+    key2 = 'test/unique/key2.png',
     value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed ' +
         'do eiusmod tempor incididunt ut labore et dolore magna aliqua',
 

@@ -2,6 +2,7 @@ var util = require('util'),
 
     vow = require('vow'),
     request = require('request'),
+    mime = require('mime'),
 
     MDS = function (options) {
         this.init(options);
@@ -227,6 +228,7 @@ MDS.prototype = {
         var o = this._createOptionsFromBase(this._write.options);
         o.url = this._write.url + key;
         o.body = value;
+        o.headers['Content-type'] = mime.lookup(key);
         return callback !== null ?
             this._sendRequestWithCallback(o, callback) :
             this._sendRequestWithPromise(o);
