@@ -210,6 +210,7 @@ MDS.prototype = {
     read: function (key, callback) {
         var o = this._createOptionsFromBase(this._read.options);
         o.url = this._read.url + key;
+        o.headers['Content-type'] = mime.lookup(key);
         return callback !== null ?
             this._sendRequestWithCallback(o, callback) :
             this._sendRequestWithPromise(o);
