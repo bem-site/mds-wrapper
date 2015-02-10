@@ -281,6 +281,15 @@ MDS.prototype = {
      */
     removeP: function (key) {
         return this.remove(key, null);
+    },
+
+    /**
+     * Returns full url on mds storage
+     * @param {String} key - key of record
+     * @returns {*}
+     */
+    getFullUrl: function (key) {
+        return this._read.url + key;
     }
 };
 

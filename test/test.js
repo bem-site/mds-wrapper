@@ -75,6 +75,13 @@ describe('mds-wrapper', function () {
         });
     });
 
+    describe('#test full url retrieve', function () {
+        it('it should return valid full url for given key of record', function () {
+            mds.getFullUrl(key1).should.equal('http://' + options.get.host + ':' + options.get.port +
+            '/get-' + options.namespace + '/' + key1);
+        });
+    });
+
     describe('#before write', function () {
         it('it shouldn\'t be any data', function (done) {
             mds.read(key1, function (error, body) {
