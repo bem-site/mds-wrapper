@@ -111,7 +111,7 @@ mds.remove('you-custom-key', function(error, result) {
 Promise вариант вызова метода `read`:
 
 ```
-mds.read('you-custom-key').then(function(value) {
+mds.readP('you-custom-key').then(function(value) {
     console.log(value);
 });
 ```
@@ -121,7 +121,7 @@ mds.read('you-custom-key').then(function(value) {
 Promise вариант вызова метода `write`:
 
 ```
-mds.write('you-custom-key', 'your-custom-value').then(function(value) {
+mds.writeP('you-custom-key', 'your-custom-value').then(function(value) {
     console.log(value); // 'your-custom-value'
 });
 ```
@@ -131,7 +131,7 @@ mds.write('you-custom-key', 'your-custom-value').then(function(value) {
 Promise вариант вызова метода `remove`:
 
 ```
-mds.remove('you-custom-key').then(function(result) {
+mds.removeP('you-custom-key').then(function(result) {
     console.log(result); // null
 });
 ```
