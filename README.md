@@ -9,6 +9,21 @@ mds-wrapper
 
 Модуль для работы с медиа-хранилищем.
 
+<!-- TOC -->
+- [Использование](#Использование)
+- [API](#api)
+  - [constructor](#constructor)
+  - [read](#read)
+  - [write](#write)
+  - [remove](#remove)
+  - [readToStream](#readtostream)
+  - [writeFromStream](#writefromstream)
+  - [getFullUrl](#getfullurl)
+- [Тестирование](#Тестирование)
+- [Лицензия](#Лицензия)
+
+<!-- TOC END -->
+
 ### Использование
 
 ```
