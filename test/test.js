@@ -1,13 +1,14 @@
 var should = require('should'),
+    nock = require('nock'),
 
     MDS = require('../index.js'),
-    emulator = require('../mds-emulator'),
     key1 = 'test/unique/key1.html',
     key2 = 'test/unique/key2.png',
     value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed ' +
-        'do eiusmod tempor incididunt ut labore et dolore magna aliqua',
+        'do eiusmod tempor incididunt ut labore et dolore magna aliqua';
 
-    options = {
+function getOptions() {
+    return {
         namespace: 'my-site',
         get: {
             host: '127.0.0.1',
@@ -18,264 +19,263 @@ var should = require('should'),
             port: 3001
         },
         auth: 'Basic: 1234567890abcdef',
-        debug: true
-    },
-    mds;
+        debug: false
+    };
+}
 
 describe('mds-wrapper', function () {
-    before(function () {
-        mds = new MDS(options);
-        emulator.start(options.get.port, options.post.port);
-    });
-
-    after(function () {
-        emulator.stop();
-    });
-
-    describe('#missed options', function () {
-        it('it trow error on missed options', function () {
-            try {
-                new MDS(null);
-            } catch (err) {
-                err.message.should.equal('Can\'t initialize mds wrapper. Options undefined.');
-            }
+    describe('it should throw error on', function () {
+        it('missed options', function () {
+            (function () { new MDS(null); }).should.throw('Can\'t initialize mds wrapper. Options undefined.');
         });
 
-        it('it trow error on missed get options', function () {
-            try {
-                new MDS({});
-            } catch (err) {
-                err.message.should.equal('Can\'t initialize mds wrapper. Options for read data requests undefined.');
-            }
+        it('missed get options', function () {
+            (function () { new MDS({}); })
+                .should.throw('Can\'t initialize mds wrapper. Options for read data requests undefined.');
         });
 
-        it('it trow error on missed post options', function () {
-            try {
-                new MDS({ get: {} });
-            } catch (err) {
-                err.message.should.equal('Can\'t initialize mds wrapper. Options for write data requests undefined.');
-            }
+        it('missed post options', function () {
+            (function () { new MDS({ get: {} }); })
+                .should.throw('Can\'t initialize mds wrapper. Options for write data requests undefined.');
         });
     });
 
-    describe('#default options', function () {
-        var mds1 = new MDS({ get: {}, post: {} }),
-            mds2 = new MDS({ host: 'myhost', get: {}, post: {} });
-
+    describe('options passing', function () {
         it('it should use default options', function () {
-            mds1._options.get.host.should.equal('127.0.0.1');
-            mds1._options.post.host.should.equal('127.0.0.1');
-            mds1._options.get.port.should.equal(80);
-            mds1._options.post.port.should.equal(1111);
+            var mds = new MDS({ get: {}, post: {} });
+            mds.getOptions().get.host.should.equal('127.0.0.1');
+            mds.getOptions().post.host.should.equal('127.0.0.1');
+            mds.getOptions().get.port.should.equal(80);
+            mds.getOptions().post.port.should.equal(1111);
         });
 
         it('it should use common host for get and post requests', function () {
-            mds2._options.get.host.should.equal('myhost');
-            mds2._options.post.host.should.equal('myhost');
+            var mds = new MDS({ host: 'myhost', get: {}, post: {} });
+            mds.getOptions().get.host.should.equal('myhost');
+            mds.getOptions().post.host.should.equal('myhost');
         });
     });
 
-    describe('#test full url retrieve', function () {
+    describe('it should build valid full url string', function () {
         it('it should return valid full url for given key of record', function () {
-            mds.getFullUrl(key1).should.equal('http://' + options.get.host + ':' + options.get.port +
-            '/get-' + options.namespace + '/' + key1);
+            var mds = new MDS(getOptions());
+            mds.getFullUrl(key1).should.equal('http://' + getOptions().get.host + ':' + getOptions().get.port +
+            '/get-' + getOptions().namespace + '/' + key1);
         });
     });
 
-    describe('#before write', function () {
-        it('it shouldn\'t be any data', function (done) {
-            mds.read(key1, function (error, body) {
+    describe('read', function () {
+        it('should read data and return it in callback if exists in storage for given key', function (done) {
+            nock('http://127.0.0.1:3000')
+                .get('/get-my-site/key')
+                .reply(200, 'Hello World');
+
+            var mds = new MDS(getOptions());
+            mds.read('key', function (error, data) {
                 should.not.exist(error);
-                should(body).not.be.ok;
+                data.should.equal('Hello World');
                 done();
             });
         });
-        it('it shouldn\'t be any data', function (done) {
-            mds.readP(key2).then(function (body) {
-                should(body).not.be.ok;
-                done();
+
+        it('should read data and return it in promise if exists in storage for given key', function () {
+            nock('http://127.0.0.1:3000')
+                .get('/get-my-site/key')
+                .reply(200, 'Hello World');
+
+            var mds = new MDS(getOptions());
+            return mds.read('key').then(function (data) {
+                data.should.equal('Hello World');
+            });
+        });
+
+        describe('error cases', function () {
+            it('should return callback with error if ETIMEOUT network error occur', function (done) {
+                nock('http://127.0.0.1:3000')
+                    .get('/get-my-site/key')
+                    .replyWithError({ 'message': 'timeout', code: 'ETIMEDOUT' });
+
+                var mds = new MDS(getOptions());
+                mds.read('key', function (error, data) {
+                    error.code.should.equal('ETIMEDOUT');
+                    should.not.exist(data);
+                    done();
+                });
+            });
+
+            it('should return callback with null data if it does not exists for given key', function (done) {
+                nock('http://127.0.0.1:3000')
+                    .get('/get-my-site/key')
+                    .reply(404);
+
+                var mds = new MDS(getOptions());
+                mds.read('key', function (error, data) {
+                    should(data).be.equal(null);
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of invalid request', function (done) {
+                nock('http://127.0.0.1:3000')
+                    .get('/get-my-site/key')
+                    .reply(400);
+
+                var mds = new MDS(getOptions());
+                mds.read('key', function (error) {
+                    error.message.should.equal('Invalid request');
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of missed auth headers', function (done) {
+                nock('http://127.0.0.1:3000')
+                    .get('/get-my-site/key')
+                    .reply(401);
+
+                var mds = new MDS(getOptions());
+                mds.read('key', function (error) {
+                    error.message.should.equal('Auth headers missed or invalid');
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of no empty space', function (done) {
+                nock('http://127.0.0.1:3000')
+                    .get('/get-my-site/key')
+                    .reply(507);
+
+                var mds = new MDS(getOptions());
+                mds.read('key', function (error) {
+                    error.message.should.equal('No empty space in MDS storage');
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of MDS internal error', function (done) {
+                nock('http://127.0.0.1:3000')
+                    .get('/get-my-site/key')
+                    .reply(503);
+
+                var mds = new MDS(getOptions());
+                mds.read('key', function (error) {
+                    error.message.should.equal('MDS internal error');
+                    done();
+                });
             });
         });
     });
 
-    describe('#write', function () {
-        it('it should write correctly (callback)', function (done) {
-            mds.write(key1, value, function (error, body) {
-                done();
-            });
-        });
+    describe('write', function () {
+        it('should write data and return result in callback', function (done) {
+            nock('http://127.0.0.1:3001')
+                .post('/upload-my-site/key', 'Hello World')
+                .reply(200, 'OK');
 
-        it('it should write correctly (promise)', function (done) {
-            mds.writeP(key2, value).then(function (body) {
-                done();
-            });
-        });
-    });
-
-    describe('#after write', function () {
-        it('it should be present in storage (callback)', function (done) {
-            mds.read(key1, function (error, body) {
+            var mds = new MDS(getOptions());
+            mds.write('key', 'Hello World', function (error, data) {
                 should.not.exist(error);
-                should.exist(body);
-                body.should.equal(value);
+                data.should.equal('OK');
                 done();
             });
         });
 
-        it('it should be present in storage (promise)', function (done) {
-            mds.readP(key2).then(function (body) {
-                should.exist(body);
-                body.should.equal(value);
-                done();
+        it('should write data and return result in promise', function () {
+            nock('http://127.0.0.1:3001', 'Hello World')
+                .post('/upload-my-site/key')
+                .reply(200, 'OK');
+
+            var mds = new MDS(getOptions());
+            return mds.write('key', 'Hello World').then(function (data) {
+                data.should.equal('OK')
+            });
+        });
+
+        describe('error cases', function () {
+            it('should return callback with error if ETIMEOUT network error occur', function (done) {
+                nock('http://127.0.0.1:3001')
+                    .post('/upload-my-site/key', 'Hello World')
+                    .replyWithError({ 'message': 'timeout', code: 'ETIMEDOUT' });
+
+                var mds = new MDS(getOptions());
+                mds.write('key', 'Hello World', function (error, data) {
+                    error.code.should.equal('ETIMEDOUT');
+                    should.not.exist(data);
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of invalid request', function (done) {
+                nock('http://127.0.0.1:3001')
+                    .post('/upload-my-site/key', 'Hello World')
+                    .reply(400);
+
+                var mds = new MDS(getOptions());
+                mds.write('key', 'Hello World', function (error) {
+                    error.message.should.equal('Invalid request');
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of missed auth headers', function (done) {
+                nock('http://127.0.0.1:3001')
+                    .post('/upload-my-site/key', 'Hello World')
+                    .reply(401);
+
+                var mds = new MDS(getOptions());
+                mds.write('key', 'Hello World', function (error) {
+                    error.message.should.equal('Auth headers missed or invalid');
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of no empty space', function (done) {
+                nock('http://127.0.0.1:3001')
+                    .post('/upload-my-site/key', 'Hello World')
+                    .reply(507);
+
+                var mds = new MDS(getOptions());
+                mds.write('key', 'Hello World', function (error) {
+                    error.message.should.equal('No empty space in MDS storage');
+                    done();
+                });
+            });
+
+            it('should return callback with error in case of MDS internal error', function (done) {
+                nock('http://127.0.0.1:3001')
+                    .post('/upload-my-site/key', 'Hello World')
+                    .reply(503);
+
+                var mds = new MDS(getOptions());
+                mds.write('key', 'Hello World', function (error) {
+                    error.message.should.equal('MDS internal error');
+                    done();
+                });
             });
         });
     });
 
-    describe('#remove', function () {
-        it('it should remove correctly (callback)', function (done) {
-            mds.remove(key1, function (error, body) {
-                done();
-            });
-        });
+    describe('remove', function () {
+        it('should remove data and return result in callback', function (done) {
+            nock('http://127.0.0.1:3001')
+                .get('/delete-my-site/key')
+                .reply(200, 'OK');
 
-        it('it should remove correctly (promise)', function (done) {
-            mds.removeP(key2).then(function (body) {
-                done();
-            });
-        });
-    });
-
-    describe('#after remove', function () {
-        it('it shouldn\'t be any data', function (done) {
-            mds.read(key1, function (error, body) {
+            var mds = new MDS(getOptions());
+            mds.remove('key', function (error, data) {
                 should.not.exist(error);
-                should(body).not.be.ok;
-                done();
-            });
-        });
-        it('it shouldn\'t be any data', function (done) {
-            mds.readP(key2).then(function (body) {
-                should(body).not.be.ok;
-                done();
-            });
-        });
-    });
-
-    // test error responses
-    describe('#test 400 status', function () {
-        it('it should return 400 for invalid request (callback)', function (done) {
-            mds.read(null, function (error, body) {
-                should.exist(error);
-                error.message.should.equal('Invalid request');
-                should(body).not.be.ok;
+                data.should.equal('OK');
                 done();
             });
         });
 
-        it('it should return 400 for invalid request (promise)', function (done) {
-            mds.readP(null).fail(function (error) {
-                should.exist(error);
-                error.message.should.equal('Invalid request');
-                done();
-            });
-        });
-    });
+        it('should remove data and return result in promise', function () {
+            nock('http://127.0.0.1:3001')
+                .get('/delete-my-site/key')
+                .reply(200, 'OK');
 
-    // test error responses
-    describe('#test 401 status', function () {
-        var options1 = {
-                namespace: options.namespace,
-                get: options.get,
-                post: options.post,
-                debug: options.debug
-            },
-            mds1 = new MDS(options1);
-
-        it('it should return 401 for missed auth header (callback)', function (done) {
-            mds1.write(key1, value, function (error, body) {
-                should.exist(error);
-                error.message.should.equal('Auth headers missed or invalid');
-                should(body).not.be.ok;
-                done();
-            });
-        });
-
-        it('it should return 401 for missed auth header  (promise)', function (done) {
-            mds1.writeP(key2, value).fail(function (error) {
-                should.exist(error);
-                error.message.should.equal('Auth headers missed or invalid');
-                done();
-            });
-        });
-    });
-
-    // test error responses
-    describe('#test 507 status', function () {
-        it('it should return 507 for fulfilled storage (callback)', function (done) {
-            mds.write('-1', value, function (error, body) {
-                should.exist(error);
-                error.message.should.equal('No empty space in MDS storage');
-                should(body).not.be.ok;
-                done();
-            });
-        });
-
-        it('it should return 507 for fulfilled storage (promise)', function (done) {
-            mds.writeP('-1', value).fail(function (error) {
-                should.exist(error);
-                error.message.should.equal('No empty space in MDS storage');
-                done();
-            });
-        });
-    });
-
-    // test error responses
-    describe('#test 50x status', function () {
-        it('it should return 50x for internal storage error (callback)', function (done) {
-            mds.write('-2', value, function (error, body) {
-                should.exist(error);
-                error.message.should.equal('MDS internal error');
-                should(body).not.be.ok;
-                done();
-            });
-        });
-
-        it('it should return 50x for internal storage error (promise)', function (done) {
-            mds.writeP('-2', value).fail(function (error) {
-                should.exist(error);
-                error.message.should.equal('MDS internal error');
-                done();
-            });
-        });
-    });
-
-    // test error on request
-    describe('#test error on request', function () {
-        var options1 = {
-                namespace: options.namespace,
-                get: {
-                    host: 'invalid',
-                    port: options.get.port
-                },
-                post: options.post,
-                debug: options.debug
-            },
-            mds1 = new MDS(options1);
-
-        it('it should return error on request', function (done) {
-            mds1.read(key1, function (error, body) {
-                should.exist(error);
-                error.message.should.equal('getaddrinfo ENOTFOUND');
-                should(body).not.be.ok;
-                done();
-            });
-        });
-
-        it('it should return error on request (promise)', function (done) {
-            mds1.readP(key2).fail(function (error) {
-                should.exist(error);
-                error.message.should.equal('getaddrinfo ENOTFOUND');
-                done();
+            var mds = new MDS(getOptions());
+            return mds.remove('key').then(function (data) {
+                data.should.equal('OK')
             });
         });
     });
