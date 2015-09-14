@@ -36,63 +36,23 @@ MDS.prototype = {
         }
     },
 
-    _logRS: function (status, url) {
-        this._log(util.format('response status %s for url: %s', status, url));
-    },
-
     /**
-     * Executes request sending with given options and callback function
-     * @param {Object} opts - request options object
-     * @param {Function} callback function
-     * @returns {*}
+     * Sends request
+     * @param {Object} opts - request options
+     * @param {Function} [callback] callback function
+     * @returns {Promise|void 0} Promise if callback does not exists, nothing otherwise
      * @private
      */
-    _sendRequestWithCallback: function (opts, callback) {
-        var _this = this;
-        this._log(util.format('_sendRequestWithCallback: %s', opts.url));
-        request(opts, function (error, response, body) {
-            if (error) {
-                return callback(error);
-            }
-
-            _this._logRS(response.statusCode, opts.url);
-
-            if (response.statusCode === 200) {
-                return callback(null, body);
-            }
-            if (response.statusCode === 404) {
-                return callback(null, null);
-            }
-            if (response.statusCode === 400) {
-                return callback(new Error(_this._errors.INVALID_REQUEST));
-            }
-            if (response.statusCode === 401) {
-                return callback(new Error(_this._errors.MISSING_AUTH));
-            }
-            if (response.statusCode === 507) {
-                return callback(new Error(_this._errors.NO_EMPTY_SPACE));
-            }
-            if (response.statusCode >= 500) {
-                return callback(new Error(_this._errors.MDS));
-            }
-        });
-    },
-
-    /**
-     * Executes request sending and return promise object
-     * @param {Object} opts - request options object
-     * @returns {*}
-     * @private
-     */
-    _sendRequestWithPromise: function (opts) {
+    _sendRequest: function (opts, callback) {
         var _this = this,
             def = vow.defer();
-        this._log(util.format('_sendRequestWithPromise: %s', opts.url));
+
+        this._log(util.format('_sendRequest: %s', opts.url));
         request(opts, function (error, response, body) {
             if (error) {
                 def.reject(error);
             } else {
-                _this._logRS(response.statusCode, opts.url);
+                _this._log(util.format('response status %s for url: %s', response.statusCode, opts.url));
 
                 if (response.statusCode === 200) {
                     def.resolve(body);
@@ -114,7 +74,15 @@ MDS.prototype = {
                 }
             }
         });
-        return def.promise();
+
+        if (!callback) {
+            return def.promise();
+        } else {
+            return def.promise()
+                .then(function (data) { callback(null, data); })
+                .fail(callback)
+                .done();
+        }
     },
 
     /**
@@ -205,18 +173,13 @@ MDS.prototype = {
      * @param {Function} callback function. Optional parameter. If callback function is not present
      * then function will return the promise which state will depend on request execution
      * @returns {*}
-     * @private
      */
     read: function (key, callback) {
         var o = this._createOptionsFromBase(this._read.options);
         o.url = this._read.url + key;
         o.headers = o.headers || {};
-        if (key) {
-            o.headers[ 'Content-type' ] = mime.lookup(key);
-        }
-        return callback !== null ?
-            this._sendRequestWithCallback(o, callback) :
-            this._sendRequestWithPromise(o);
+        key && (o.headers['Content-type'] = mime.lookup(key));
+        return this._sendRequest(o, callback);
     },
 
     /**
@@ -226,18 +189,13 @@ MDS.prototype = {
      * @param {Function} callback function. Optional parameter. If callback function is not present
      * then function will return the promise which state will depend on request execution
      * @returns {*}
-     * @private
      */
     write: function (key, value, callback) {
         var o = this._createOptionsFromBase(this._write.options);
         o.url = this._write.url + key;
         o.body = value;
-        if (key) {
-            o.headers[ 'Content-type' ] = mime.lookup(key);
-        }
-        return callback !== null ?
-            this._sendRequestWithCallback(o, callback) :
-            this._sendRequestWithPromise(o);
+        key && (o.headers['Content-type'] = mime.lookup(key));
+        return this._sendRequest(o, callback);
     },
 
     /**
@@ -245,51 +203,54 @@ MDS.prototype = {
      * @param {String} key - key of record
      * @param {Function} callback function. Optional parameter. If callback function is not present
      * then function will return the promise which state will depend on request execution
-     * @private
      */
     remove: function (key, callback) {
         var o = this._createOptionsFromBase(this._remove.options);
         o.url = this._remove.url + key;
-        return callback !== null ?
-            this._sendRequestWithCallback(o, callback) :
-            this._sendRequestWithPromise(o);
+
+        return this._sendRequest(o, callback);
     },
 
     /**
      * Short alias for call read method with promise result
      * @param {String} key - key of record
-     * @returns {*}
+     * @deprecated
+     * @returns {Promise}
      */
-    readP: function (key) {
-        return this.read(key, null);
-    },
+    readP: this.read,
 
     /**
      * Short alias for call write method with promise result
      * @param {String} key - key of record
      * @param {String} value - data converted to string
-     * @returns {*}
+     * @deprecated
+     * @returns {Promise}
      */
-    writeP: function (key, value) {
-        return this.write(key, value, null);
-    },
+    writeP: this.write,
 
     /**
      * Short alias for call remove method with promise result
      * @param {String} key - key of record
-     * @returns {*}
+     * @deprecated
+     * @returns {Promise}
      */
-    removeP: function (key) {
-        return this.remove(key, null);
-    },
+    removeP: this.remove,
 
     /**
      * Returns full url on mds storage
      * @param {String} key - key of record
-     * @returns {*}
+     * @returns {String}
      */
     getFullUrl: function (key) {
         return this._read.url + key;
+    },
+
+    /**
+     * Returns mds wrapper options
+     * @returns {Object}
+     */
+    getOptions: function () {
+        return this._options;
     }
 };
 
