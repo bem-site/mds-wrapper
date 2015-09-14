@@ -1,8 +1,7 @@
 mds-wrapper
 ===============
 
-[![NPM](https://nodei.co/npm/mds-wrapper.png)](https://nodei.co/npm/mds-wrapper/)
-
+[![NPM version](http://img.shields.io/npm/v/mds-wrapper.svg?style=flat)](http://www.npmjs.org/package/mds-wrapper)
 [![Coveralls branch](https://img.shields.io/coveralls/bem-site/mds-wrapper/master.svg)](https://coveralls.io/r/bem-site/mds-wrapper?branch=master)
 [![Travis](https://img.shields.io/travis/bem-site/mds-wrapper.svg)](https://travis-ci.org/bem-site/mds-wrapper)
 [![David](https://img.shields.io/david/bem-site/mds-wrapper.svg)](https://david-dm.org/bem-site/mds-wrapper)
@@ -80,16 +79,20 @@ var mds = new MDS({
 
 Метод для чтения данных из хранилища по ключу.
 
-```
-mds.read('you-custom-key', function(error, value) {
+Параметры:
+
+* {String} `key` - ключ для записи в хранилище.
+* {Function} `callback` - функция, которая первым аргументом принимает экземпляр класса Error 
+(в случае возникновения ошибки), а вторым - возвращаемые методом данные.
+
+`callback`-функция является опциональным параметром. Без передачи данной функции, метод вернет Promise-объект.
+
+Пример:
+```js
+mds.read('your-custom-key', function(error, value) {
     console.log(value);
 });
-```
-
-Если callback-функция не будет передана, то метод вернет Promise:
-
-```
-mds.read('you-custom-key').then(function(value) {
+mds.read('your-custom-key').then(function(value) {
     console.log(value);
 });
 ```
@@ -98,16 +101,21 @@ mds.read('you-custom-key').then(function(value) {
 
 Метод для записи данных в хранилище по ключу.
 
-```
-mds.write('you-custom-key', 'your-custom-value', function(error, value) {
+Параметры:
+
+* {String} `key` - ключ для записи в хранилище.
+* {String} `value` - значение для записи в хранилище.
+* {Function} `callback` - функция, которая первым аргументом принимает экземпляр класса Error 
+(в случае возникновения ошибки), а вторым - возвращаемые методом данные.
+
+`callback`-функция является опциональным параметром. Без передачи данной функции, метод вернет Promise-объект.
+
+Пример:
+```js
+mds.write('your-custom-key', 'your-custom-value', function(error, value) {
     console.log(value); // 'your-custom-value'
 });
-```
-
-Если callback-функция не будет передана, то метод вернет Promise:
-
-```
-mds.writeP('you-custom-key', 'your-custom-value').then(function(value) {
+mds.write('your-custom-key', 'your-custom-value').then(function(value) {
     console.log(value); // 'your-custom-value'
 });
 ```
@@ -116,20 +124,51 @@ mds.writeP('you-custom-key', 'your-custom-value').then(function(value) {
 
 Метод для удаления данных из хранилища по ключу.
 
-```
-mds.remove('you-custom-key', function(error, result) {
+Параметры:
+
+* {String} `key` - ключ для записи в хранилище.
+* {Function} `callback` - функция, которая первым аргументом принимает экземпляр класса Error 
+(в случае возникновения ошибки), а вторым - возвращаемые методом данные.
+
+`callback`-функция является опциональным параметром. Без передачи данной функции, метод вернет Promise-объект.
+
+Пример:
+```js
+mds.remove('your-custom-key', function(error, result) {
+    console.log(result); // null
+});
+mds.removeP('your-custom-key').then(function(result) {
     console.log(result); // null
 });
 ```
 
-Если callback-функция не будет передана, то метод вернет Promise:
+#### readToStream
+
+Метод, считывающий данные из хранилища по ключу и вовращающий экземпляр класса Stream.
+Позволяет осуществлять потоковое чтение с помощью NodeJS Stream API.
+
+Пример:
+
+```js
+mds.read('your-custom-key').pipe(fs.createWriteStream('./your-custom-key.txt'));
+```
+
+#### writeFromStream
+
+Метод, принимающий в качестве значения для записи экземпляр класса Stream.
+Позволяет осуществлять потоковую запись с помощью NodeJS Stream API.
+
+Пример:
 
 ```
-mds.removeP('you-custom-key').then(function(result) {
-    console.log(result); // null
-});
+mds.writeFromStream('your-custom-key', fs.createReadStream('./your-custom-key.txt'))
+    .on('end', function () {
+        console.log('Success');
+    })
+    .on('error', function (error) {
+        console.error(error);
+    });
 ```
-
 
 #### getFullUrl
 
@@ -137,19 +176,14 @@ mds.removeP('you-custom-key').then(function(result) {
 
 ### Тестирование
 
-Для запуска тестов с дополнительной проверкой синтакса:
+Для запуска процедуры проверки синтаксиса и стиля кода:
+```sh
+npm run codestyle
 ```
+
+Для запуска тестов:
+```sh
 npm test
-```
-
-Для запуска только mocha тестов:
-```
-npm run mocha
-```
-
-Для запуска тестов с покрытием:
-```
-npm run istanbul
 ```
 
 ### Лицензия
