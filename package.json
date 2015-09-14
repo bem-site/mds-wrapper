@@ -22,6 +22,7 @@
     "vow": "^0.4.x"
   },
   "devDependencies": {
+    "fs-extra": "^0.24.0",
     "istanbul": "^0.3.20",
     "jscs": "^2.1.1",
     "jshint": "^2.8.0",

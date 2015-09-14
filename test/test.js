@@ -1,11 +1,9 @@
-var should = require('should'),
+var fs = require('fs'),
+    fsExtra = require('fs-extra'),
+    should = require('should'),
     nock = require('nock'),
 
-    MDS = require('../index.js'),
-    key1 = 'test/unique/key1.html',
-    key2 = 'test/unique/key2.png',
-    value = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed ' +
-        'do eiusmod tempor incididunt ut labore et dolore magna aliqua';
+    MDS = require('../index.js');
 
 function getOptions() {
     return {
@@ -24,6 +22,14 @@ function getOptions() {
 }
 
 describe('mds-wrapper', function () {
+    beforeEach(function () {
+        fsExtra.ensureDirSync('./tmp');
+    });
+
+    afterEach(function () {
+        fsExtra.removeSync('./tmp');
+    });
+
     describe('it should throw error on', function () {
         it('missed options', function () {
             (function () { new MDS(null); }).should.throw('Can\'t initialize mds wrapper. Options undefined.');
@@ -58,9 +64,10 @@ describe('mds-wrapper', function () {
 
     describe('it should build valid full url string', function () {
         it('it should return valid full url for given key of record', function () {
-            var mds = new MDS(getOptions());
-            mds.getFullUrl(key1).should.equal('http://' + getOptions().get.host + ':' + getOptions().get.port +
-            '/get-' + getOptions().namespace + '/' + key1);
+            var key = 'test/unique/key.html',
+                mds = new MDS(getOptions());
+            mds.getFullUrl(key).should.equal('http://' + getOptions().get.host + ':' + getOptions().get.port +
+            '/get-' + getOptions().namespace + '/' + key);
         });
     });
 
@@ -87,6 +94,23 @@ describe('mds-wrapper', function () {
             return mds.read('key').then(function (data) {
                 data.should.equal('Hello World');
             });
+        });
+
+        it('should read value as stream as save file on filesystem', function (done) {
+            nock('http://127.0.0.1:3000')
+                .get('/get-my-site/key')
+                .replyWithFile(200, __dirname + '/fixture.json');
+
+            (new MDS(getOptions()))
+                .readToStream('key')
+                .pipe(fs.createWriteStream('./tmp/fixture.json'))
+                .on('finish', function () {
+                    fs.existsSync('./tmp/fixture.json').should.equal(true);
+                    var initial = fsExtra.readJSONSync('./test/fixture.json'),
+                        output = fsExtra.readJSONSync('./tmp/fixture.json');
+                    should.deepEqual(initial, output);
+                    done();
+                });
         });
 
         describe('error cases', function () {
@@ -188,6 +212,24 @@ describe('mds-wrapper', function () {
             return mds.write('key', 'Hello World').then(function (data) {
                 data.should.equal('OK')
             });
+        });
+
+        it('should write streamed data from file', function (done) {
+            var body;
+            nock('http://127.0.0.1:3001', 'Hello World')
+                .post('/upload-my-site/key')
+                .reply(200, function(uri, requestBody) {
+                    body = requestBody;
+                });
+
+            var mds = new MDS(getOptions());
+            mds
+                .writeFromStream('key', fs.createReadStream('./test/fixture.json'))
+                .on('end', function () {
+                    var initial = fsExtra.readJSONSync('./test/fixture.json');
+                    should.deepEqual(initial, JSON.parse(body));
+                    done();
+                });
         });
 
         describe('error cases', function () {

@@ -26,6 +26,177 @@ MDS.prototype = {
     },
 
     /**
+     * Initialize mds storage by given configuration
+     * @param {Object} options - configuration object
+     */
+    init: function (options) {
+        if (!options) {
+            throw new Error('Can\'t initialize mds wrapper. Options undefined.');
+        }
+
+        this._options = options;
+        this._base.timeout = options.timeout || 5000;
+
+        if (!this._options.get) {
+            throw new Error('Can\'t initialize mds wrapper. Options for read data requests undefined.');
+        }
+
+        if (!this._options.post) {
+            throw new Error('Can\'t initialize mds wrapper. Options for write data requests undefined.');
+        }
+
+        this._options.get.host = this._options.get.host || this._options.host || '127.0.0.1';
+        this._options.get.port = this._options.get.port || 80;
+
+        this._options.post.host = this._options.post.host || this._options.host || '127.0.0.1';
+        this._options.post.port = this._options.post.port || 1111;
+
+        this._read = {};
+        this._read.options = this._createOptionsFromBase(this._base);
+        this._read.options.method = 'GET';
+        this._read.url = util.format('http://%s:%s/get-%s/',
+            this._options.get.host, this._options.get.port, this._options.namespace);
+
+        this._write = {};
+        this._write.options = this._createOptionsFromBase(this._base);
+        this._write.options.method = 'POST';
+        this._write.options.headers = { Authorization: this._options.auth };
+        this._write.url = util.format('http://%s:%s/upload-%s/',
+            this._options.post.host, this._options.post.port, this._options.namespace);
+
+        this._remove = {};
+        this._remove.options = this._createOptionsFromBase(this._base);
+        this._remove.options.method = 'GET';
+        this._remove.options.headers = { Authorization: this._options.auth };
+        this._remove.url = util.format('http://%s:%s/delete-%s/',
+            this._options.post.host, this._options.post.port, this._options.namespace);
+    },
+
+    /**
+     * Reads data by given string key.
+     * @param {String} key - key of record
+     * @param {Function} [callback] function. If callback function is not present
+     * then function will return the promise which state will depend on request execution
+     * @returns {*}
+     */
+    read: function (key, callback) {
+        return this._sendRequest(this._getCommonReadOptions(key), callback);
+    },
+
+    /**
+     * Returns streamed key value
+     * @param {String} key - key of record
+     * @returns {Stream}
+     */
+    readToStream: function (key) {
+        return request(this._getCommonReadOptions(key));
+    },
+
+    /**
+     * Writes value by given string key.
+     * @param {String} key - key of record
+     * @param {String} value - data converted to string
+     * @param {Function} [callback] function. If callback function is not present
+     * then function will return the promise which state will depend on request execution
+     * @returns {*}
+     */
+    write: function (key, value, callback) {
+        var options = this._getCommonWriteOptions(key);
+        options.body = value;
+        return this._sendRequest(options, callback);
+    },
+
+    /**
+     * Writes value for given key as stream
+     * @param {String} key - key of record
+     * @param {Stream} stream - streamed value
+     */
+    writeFromStream: function (key, stream) {
+        return stream.pipe(request(this._getCommonWriteOptions(key)));
+    },
+
+    /**
+     * Removes value by given string key
+     * @param {String} key - key of record
+     * @param {Function} [callback] function. If callback function is not present
+     * then function will return the promise which state will depend on request execution
+     */
+    remove: function (key, callback) {
+        var options = this._createOptionsFromBase(this._remove.options);
+        options.url = this._remove.url + key;
+        return this._sendRequest(options, callback);
+    },
+
+    /**
+     * Short alias for call read method with promise result
+     * @param {String} key - key of record
+     * @deprecated
+     * @returns {Promise}
+     */
+    readP: this.read,
+
+    /**
+     * Short alias for call write method with promise result
+     * @param {String} key - key of record
+     * @param {String} value - data converted to string
+     * @deprecated
+     * @returns {Promise}
+     */
+    writeP: this.write,
+
+    /**
+     * Short alias for call remove method with promise result
+     * @param {String} key - key of record
+     * @deprecated
+     * @returns {Promise}
+     */
+    removeP: this.remove,
+
+    /**
+     * Returns full url on mds storage
+     * @param {String} key - key of record
+     * @returns {String}
+     */
+    getFullUrl: function (key) {
+        return this._read.url + key;
+    },
+
+    /**
+     * Returns mds wrapper options
+     * @returns {Object}
+     */
+    getOptions: function () {
+        return this._options;
+    },
+
+    /**
+     * Generates options for read requests
+     * @param {String} key - key of record
+     * @returns {Object}
+     * @private
+     */
+    _getCommonReadOptions: function (key) {
+        var options = this._createOptionsFromBase(this._read.options);
+        options.url = this._read.url + key;
+        options.headers = options.headers || {};
+        key && (options.headers['Content-type'] = mime.lookup(key));
+        return options;
+    },
+
+    /**
+     * Generates options for write requests
+     * @param {String} key - key of record
+     * @returns {Object}
+     * @private
+     */
+    _getCommonWriteOptions: function (key) {
+        var options = this._createOptionsFromBase(this._write.options);
+        options.url = this._write.url + key;
+        key && (options.headers['Content-type'] = mime.lookup(key));
+        return options;
+    },
+
+    /**
      * Creates log message in console
      * @param {String} message - log message
      * @private
@@ -96,161 +267,6 @@ MDS.prototype = {
             prev[key] = base[key];
             return prev;
         }, {});
-    },
-
-    /**
-     * Initialize options for read methods
-     * @private
-     */
-    _initReadOptions: function () {
-        this._read = {};
-        this._read.options = this._createOptionsFromBase(this._base);
-        this._read.options.method = 'GET';
-        this._read.url = util.format('http://%s:%s/get-%s/',
-            this._options.get.host, this._options.get.port, this._options.namespace);
-    },
-
-    /**
-     * Initialize options for write methods
-     * @private
-     */
-    _initWriteOptions: function () {
-        this._write = {};
-        this._write.options = this._createOptionsFromBase(this._base);
-        this._write.options.method = 'POST';
-        this._write.options.headers = { Authorization: this._options.auth };
-        this._write.url = util.format('http://%s:%s/upload-%s/',
-            this._options.post.host, this._options.post.port, this._options.namespace);
-    },
-
-    /**
-     * Initialize options for remove methods
-     * @private
-     */
-    _initRemoveOptions: function () {
-        this._remove = {};
-        this._remove.options = this._createOptionsFromBase(this._base);
-        this._remove.options.method = 'GET';
-        this._remove.options.headers = { Authorization: this._options.auth };
-        this._remove.url = util.format('http://%s:%s/delete-%s/',
-            this._options.post.host, this._options.post.port, this._options.namespace);
-    },
-
-    /**
-     * Initialize mds storage by given configuration
-     * @param {Object} options - configuration object
-     */
-    init: function (options) {
-        if (!options) {
-            throw new Error('Can\'t initialize mds wrapper. Options undefined.');
-        }
-
-        this._options = options;
-        this._base.timeout = options.timeout || 5000;
-
-        if (!this._options.get) {
-            throw new Error('Can\'t initialize mds wrapper. Options for read data requests undefined.');
-        }
-
-        if (!this._options.post) {
-            throw new Error('Can\'t initialize mds wrapper. Options for write data requests undefined.');
-        }
-
-        this._options.get.host = this._options.get.host || this._options.host || '127.0.0.1';
-        this._options.get.port = this._options.get.port || 80;
-
-        this._options.post.host = this._options.post.host || this._options.host || '127.0.0.1';
-        this._options.post.port = this._options.post.port || 1111;
-
-        this._initReadOptions();
-        this._initWriteOptions();
-        this._initRemoveOptions();
-    },
-
-    /**
-     * Reads data by given string key.
-     * @param {String} key - key of record
-     * @param {Function} callback function. Optional parameter. If callback function is not present
-     * then function will return the promise which state will depend on request execution
-     * @returns {*}
-     */
-    read: function (key, callback) {
-        var o = this._createOptionsFromBase(this._read.options);
-        o.url = this._read.url + key;
-        o.headers = o.headers || {};
-        key && (o.headers['Content-type'] = mime.lookup(key));
-        return this._sendRequest(o, callback);
-    },
-
-    /**
-     * Writes value by given string key.
-     * @param {String} key - key of record
-     * @param {String} value - data converted to string
-     * @param {Function} callback function. Optional parameter. If callback function is not present
-     * then function will return the promise which state will depend on request execution
-     * @returns {*}
-     */
-    write: function (key, value, callback) {
-        var o = this._createOptionsFromBase(this._write.options);
-        o.url = this._write.url + key;
-        o.body = value;
-        key && (o.headers['Content-type'] = mime.lookup(key));
-        return this._sendRequest(o, callback);
-    },
-
-    /**
-     * Removes value by given string key
-     * @param {String} key - key of record
-     * @param {Function} callback function. Optional parameter. If callback function is not present
-     * then function will return the promise which state will depend on request execution
-     */
-    remove: function (key, callback) {
-        var o = this._createOptionsFromBase(this._remove.options);
-        o.url = this._remove.url + key;
-
-        return this._sendRequest(o, callback);
-    },
-
-    /**
-     * Short alias for call read method with promise result
-     * @param {String} key - key of record
-     * @deprecated
-     * @returns {Promise}
-     */
-    readP: this.read,
-
-    /**
-     * Short alias for call write method with promise result
-     * @param {String} key - key of record
-     * @param {String} value - data converted to string
-     * @deprecated
-     * @returns {Promise}
-     */
-    writeP: this.write,
-
-    /**
-     * Short alias for call remove method with promise result
-     * @param {String} key - key of record
-     * @deprecated
-     * @returns {Promise}
-     */
-    removeP: this.remove,
-
-    /**
-     * Returns full url on mds storage
-     * @param {String} key - key of record
-     * @returns {String}
-     */
-    getFullUrl: function (key) {
-        return this._read.url + key;
-    },
-
-    /**
-     * Returns mds wrapper options
-     * @returns {Object}
-     */
-    getOptions: function () {
-        return this._options;
     }
 };
 

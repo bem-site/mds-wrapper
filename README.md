@@ -86,12 +86,28 @@ mds.read('you-custom-key', function(error, value) {
 });
 ```
 
+Если callback-функция не будет передана, то метод вернет Promise:
+
+```
+mds.read('you-custom-key').then(function(value) {
+    console.log(value);
+});
+```
+
 #### write
 
 Метод для записи данных в хранилище по ключу.
 
 ```
 mds.write('you-custom-key', 'your-custom-value', function(error, value) {
+    console.log(value); // 'your-custom-value'
+});
+```
+
+Если callback-функция не будет передана, то метод вернет Promise:
+
+```
+mds.writeP('you-custom-key', 'your-custom-value').then(function(value) {
     console.log(value); // 'your-custom-value'
 });
 ```
@@ -106,35 +122,14 @@ mds.remove('you-custom-key', function(error, result) {
 });
 ```
 
-#### readP
-
-Promise вариант вызова метода `read`:
-
-```
-mds.readP('you-custom-key').then(function(value) {
-    console.log(value);
-});
-```
-
-#### writeP
-
-Promise вариант вызова метода `write`:
-
-```
-mds.writeP('you-custom-key', 'your-custom-value').then(function(value) {
-    console.log(value); // 'your-custom-value'
-});
-```
-
-#### removeP
-
-Promise вариант вызова метода `remove`:
+Если callback-функция не будет передана, то метод вернет Promise:
 
 ```
 mds.removeP('you-custom-key').then(function(result) {
     console.log(result); // null
 });
 ```
+
 
 #### getFullUrl
 
