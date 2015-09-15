@@ -168,23 +168,6 @@ mds.removeP('your-custom-key').then(function(result) {
 mds.read('your-custom-key').pipe(fs.createWriteStream('./your-custom-key.txt'));
 ```
 
-#### writeFromStream
-
-Метод, принимающий в качестве значения для записи экземпляр класса Stream.
-Позволяет осуществлять потоковую запись с помощью NodeJS Stream API.
-
-Пример:
-
-```
-mds.writeFromStream('your-custom-key', fs.createReadStream('./your-custom-key.txt'))
-    .on('end', function () {
-        console.log('Success');
-    })
-    .on('error', function (error) {
-        console.error(error);
-    });
-```
-
 #### getFullUrl
 
 Позволяет получить полный url для записи в mds по ключу.
