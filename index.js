@@ -107,15 +107,6 @@ MDS.prototype = {
     },
 
     /**
-     * Writes value for given key as stream
-     * @param {String} key - key of record
-     * @param {Stream} stream - streamed value
-     */
-    writeFromStream: function (key, stream) {
-        return stream.pipe(request(this._getCommonWriteOptions(key)));
-    },
-
-    /**
      * Removes value by given string key
      * @param {String} key - key of record
      * @param {Function} [callback] function. If callback function is not present
@@ -133,7 +124,10 @@ MDS.prototype = {
      * @deprecated
      * @returns {Promise}
      */
-    readP: this.read,
+    readP: function (key) {
+        this._log('"readP" method is deprecated. Use "read" instead');
+        return this.read(key);
+    },
 
     /**
      * Short alias for call write method with promise result
@@ -142,7 +136,10 @@ MDS.prototype = {
      * @deprecated
      * @returns {Promise}
      */
-    writeP: this.write,
+    writeP: function (key, value) {
+        this._log('"writeP" method is deprecated. Use "write" instead');
+        return this.write(key, value);
+    },
 
     /**
      * Short alias for call remove method with promise result
@@ -150,7 +147,10 @@ MDS.prototype = {
      * @deprecated
      * @returns {Promise}
      */
-    removeP: this.remove,
+    removeP: function (key) {
+        this._log('"removeP" method is deprecated. Use "remove" instead');
+        return this.remove(key);
+    },
 
     /**
      * Returns full url on mds storage

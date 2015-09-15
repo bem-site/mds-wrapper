@@ -96,6 +96,17 @@ describe('mds-wrapper', function () {
             });
         });
 
+        it ('should read data by deprecated readP method', function () {
+            nock('http://127.0.0.1:3000')
+                .get('/get-my-site/key')
+                .reply(200, 'Hello World');
+
+            var mds = new MDS(getOptions());
+            return mds.readP('key').then(function (data) {
+                data.should.equal('Hello World');
+            });
+        });
+
         it('should read value as stream as save file on filesystem', function (done) {
             nock('http://127.0.0.1:3000')
                 .get('/get-my-site/key')
@@ -214,6 +225,18 @@ describe('mds-wrapper', function () {
             });
         });
 
+        it('should write data by deprecated writeP method', function () {
+            nock('http://127.0.0.1:3001', 'Hello World')
+                .post('/upload-my-site/key')
+                .reply(200, 'OK');
+
+            var mds = new MDS(getOptions());
+            return mds.writeP('key', 'Hello World').then(function (data) {
+                data.should.equal('OK')
+            });
+        });
+
+        /*
         it('should write streamed data from file', function (done) {
             var body;
             nock('http://127.0.0.1:3001', 'Hello World')
@@ -231,6 +254,7 @@ describe('mds-wrapper', function () {
                     done();
                 });
         });
+        */
 
         describe('error cases', function () {
             it('should return callback with error if ETIMEOUT network error occur', function (done) {
@@ -317,6 +341,17 @@ describe('mds-wrapper', function () {
 
             var mds = new MDS(getOptions());
             return mds.remove('key').then(function (data) {
+                data.should.equal('OK')
+            });
+        });
+
+        it('should remove data by deprecated removeP method', function () {
+            nock('http://127.0.0.1:3001')
+                .get('/delete-my-site/key')
+                .reply(200, 'OK');
+
+            var mds = new MDS(getOptions());
+            return mds.removeP('key').then(function (data) {
                 data.should.equal('OK')
             });
         });
